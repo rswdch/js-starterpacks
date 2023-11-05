@@ -1,12 +1,14 @@
 import express from "express";
+import { Request, Response, NextFunction, ErrorRequestHandler } from "express";
 // import cors from "cors";
 import cookieParser from 'cookie-parser';
 import path from "path";
 import { fileURLToPath } from "url";
-// import { router } from "./routes/api.js";
+import userRouter from "./controllers/user/user.routes.js";
 
 const app = express();
 app.use(express.json());
+app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
 // CORS
@@ -27,19 +29,25 @@ app.use(express.urlencoded({ extended: true }));
 
 
 // Routes
-// app.use("/api", router);
+app.use("/api/user", userRouter);
 
 // Global Error Handler
-app.use((err, req, res, next) => {
+const globalErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
+  // All errors from async & non-async route above will be handled here
   const defaultErr = {
     log: "Express error handler caught unknown middleware error",
     status: 500,
-    message: { err: "An error occurred" },
+    message: "An error occurred",
   };
   const errorObj = Object.assign({}, defaultErr, err);
+
+  console.error(errObj.stack);
+  console.error(err.message);
   console.log(errorObj.log);
+  res.status(500).send("An unknown error has occurred.");
   return res.status(errorObj.status).json(errorObj.message);
-});
+};
+app.use(globalErrorHandler);
 
 // Start server
 const PORT = 3001;
